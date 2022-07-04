@@ -1,0 +1,19 @@
+services:
+  flask-web:
+    build: /mnt/docker-cifs/ubuntu/compose/flask/flask-dev
+
+    restart: always
+    labels:
+      traefik.enable: true
+      traefik.http.routers.flask.rule: Host(`azunyan.io`)
+      traefik.http.routers.flask.entrypoints: websecure
+      traefik.http.services.flask.loadbalancer.server.port: 80
+      traefik.http.routers.flask.tls.certresolver: route53
+    networks:
+      - traefik-network
+    volumes:
+      - /mnt/docker-cifs/ubuntu/compose/flask/flask-dev/app:/app
+
+networks:
+  traefik-network:
+    external: true

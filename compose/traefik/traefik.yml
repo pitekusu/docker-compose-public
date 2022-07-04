@@ -1,0 +1,36 @@
+experimental:
+  http3: true
+
+entryPoints:
+  web:
+    address: :80
+  websecure:
+    address: :443
+    http3: {}
+  metrics:
+    address: :8082
+
+api:
+  insecure: false
+  dashboard: true
+
+providers:
+  docker:
+    exposedByDefault: false
+  file:
+    filename: /etc/traefik/external.yml
+
+certificatesResolvers:
+  route53:
+    acme:
+      dnsChallenge:
+        provider: route53
+      email: pitekusu@gmail.com
+      storage: /letsencrypt/acme.json
+      keyType: EC384
+
+metrics:
+  prometheus:
+    entryPoint: metrics
+    addEntryPointsLabels: true
+    addrouterslabels: true

@@ -1,0 +1,33 @@
+secrets:
+  code-server_secrets:
+    file: /root/secret/code-server_secrets.secret
+
+services:
+  code-server:
+    image: lscr.io/linuxserver/code-server:latest
+    container_name: code-server
+    secrets:
+      - code-server_secrets
+    environment:
+      TZ: Asia/Tokyo
+      FILE__PASSWORD: /run/secrets/code-server_secrets
+      DOCKER_MODS: linuxserver/mods:code-server-python3|linuxserver/mods:code-server-docker
+    volumes:
+      - code-server_data:/config
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    labels:
+      traefik.enable: true
+      traefik.http.routers.code-server.rule: Host(`code-server.azunyan.io`)
+      traefik.http.routers.code-server.entrypoints: websecure
+      traefik.http.routers.code-server.tls.certresolver: route53
+    restart: unless-stopped
+    networks:
+      - traefik-network
+
+volumes:
+  code-server_data:
+
+
+networks:
+  traefik-network:
+    external: true

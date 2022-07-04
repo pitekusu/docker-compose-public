@@ -1,0 +1,48 @@
+secrets:
+  aws_shared_credentials:
+    file: ~/.aws/secrets/aws_shared_credentials.secret
+  aws_hosted_zone_id:
+    file: ~/.aws/secrets/aws_hosted_zone_id.secret
+
+services:
+  traefik:
+    image: traefik:latest
+    container_name: traefik
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443/tcp"
+      - "443:443/udp"
+      - "8082:8082/tcp"
+    networks:
+      - traefik-network
+    secrets:
+      - aws_shared_credentials
+      - aws_hosted_zone_id
+    environment:
+      AWS_SHARED_CREDENTIALS_FILE: /run/secrets/aws_shared_credentials
+      AWS_HOSTED_ZONE_ID_FILE: /run/secrets/aws_hosted_zone_id
+      TZ: Asia/Tokyo
+    labels:
+      traefik.enable: true
+      traefik.http.routers.dashboard.rule: Host(`traefik.azunyan.io`)
+      traefik.http.routers.dashboard.entrypoints: websecure
+      traefik.http.routers.dashboard.tls.certresolver: route53
+      traefik.http.routers.dashboard.service: api@internal
+      traefik.http.routers.http-catchall.rule: hostregexp(`{host:.+}`)
+      traefik.http.routers.http-catchall.entrypoints: web
+      traefik.http.routers.http-catchall.middlewares: redirect-to-https
+      traefik.http.middlewares.redirect-to-https.redirectscheme.scheme: https
+    volumes:
+      - letsencrypt_data:/letsencrypt
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./external.yml:/etc/traefik/external.yml:ro
+      - ./traefik.yml:/etc/traefik/traefik.yml:ro
+
+volumes:
+  letsencrypt_data:
+
+
+networks:
+  traefik-network:
+    external: true

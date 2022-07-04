@@ -1,0 +1,9 @@
+div.img-hidden {
+  height: 900px;
+  overflow: hidden;
+}
+#footer{
+  background-color:darkslategrey;
+  color: azure;
+  text-align: center;
+}

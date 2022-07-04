@@ -1,0 +1,10 @@
+letsencrypt/acme.json
+portainer/*
+portainer/docker_config/config.json
+compose/minecraft/mods/
+prometheus/
+compose/traefik/secrets/
+compose/joplin/.env
+compose/nextcloud/.*
+compose/minecraft/.env
+compose/vaultwarden/.env

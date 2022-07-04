@@ -1,0 +1,70 @@
+services:
+  vaultwarden:
+    image: vaultwarden/server:latest
+    container_name: vaultwarden
+    restart: always
+    environment:
+      WEBSOCKET_ENABLED: true
+      SIGNUPS_ALLOWED: false
+      ADMIN_TOKEN: ${ADMIN_TOKEN}
+      TZ: Asia/Tokyo
+      DOMAIN: https://vaultwarden.azunyan.io/
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_FROM: ${SMTP_FROM}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_SSL: ${SMTP_SSL}
+      SMTP_EXPLICIT_TLS: ${SMTP_EXPLICIT_TLS}
+      SMTP_USERNAME: ${SMTP_USERNAME}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      LOG_FILE: /data/vaultwarden.log
+    labels:
+      traefik.enable: true
+      traefik.http.routers.vaultwarden.rule: Host(`vaultwarden.azunyan.io`)
+      traefik.http.routers.vaultwarden.entrypoints: websecure
+      traefik.http.services.vaultwarden.loadbalancer.server.port: 80
+      traefik.http.routers.vaultwarden.service: vaultwarden
+      traefik.http.routers.vaultwarden.tls.certresolver: route53
+      traefik.http.routers.bitwarden-websocket.rule: Host(`vaultwarden.azunyan.io`) && Path(`/notifications/hub`)
+      traefik.http.routers.bitwarden-websocket.entrypoints: websecure
+      traefik.http.routers.bitwarden-websocket.service: bitwarden-websocket
+      traefik.http.services.bitwarden-websocket.loadbalancer.server.port: 3012
+      traefik.http.routers.bitwarden-websocket.tls.certresolver: route53
+    volumes:
+      - vw-data:/data
+    networks:
+      - traefik-network
+
+  backup:
+    #リストアするときは、GoogleDrive上のzipファイルをカレントディレクトリにコピーする
+    image: ttionya/vaultwarden-backup:latest
+    restart: always
+    environment:
+      RCLONE_REMOTE_NAME: GoogleDrive
+      RCLONE_REMOTE_DIR: '/BitwardenBackup/'
+      CRON: '5 * * * *'
+      ZIP_ENABLE: TRUE
+      ZIP_PASSWORD: ${ZIP_PASSWORD}
+      BACKUP_KEEP_DAYS: 7
+      PING_URL: ${PING_URL}
+      MAIL_SMTP_ENABLE: TRUE
+      MAIL_SMTP_VARIABLES: ${MAIL_SMTP_VARIABLES}
+      MAIL_TO: ${MAIL_TO}
+      MAIL_WHEN_SUCCESS: FALSE
+      MAIL_WHEN_FAILURE: TRUE
+      TIMEZONE: Japan
+    volumes:
+      - vw-data:/bitwarden/data/
+      - vaultwarden-rclone-data:/config/
+    networks:
+      - traefik-network
+
+volumes:
+  vw-data:
+    name: vaultwarden-data
+  vaultwarden-rclone-data:
+    name: vaultwarden-rclone-data
+    external: true
+
+networks:
+  traefik-network:
+    external: true
